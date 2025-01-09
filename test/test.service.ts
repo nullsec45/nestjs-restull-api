@@ -20,7 +20,8 @@ export class TestService{
             data:{
                 username:'test',
                 name:'test',
-                password:await bcrypt.hash('test12345678',10)
+                password:await bcrypt.hash('test12345678',10),
+                token:'test'
             }
         })
     }
