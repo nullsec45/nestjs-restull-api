@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, User } from "@prisma/client";
 import { PrismaService } from "../src/common/prisma.service";
 import { Injectable } from "@nestjs/common";
 import * as bcrypt from 'bcrypt';
@@ -22,6 +22,14 @@ export class TestService{
                 name:'test',
                 password:await bcrypt.hash('test12345678',10),
                 token:'test'
+            }
+        })
+    }
+
+    async getUser():Promise<User>{
+        return this.prismaService.user.findUnique({
+            where:{
+                username:'test'
             }
         })
     }
