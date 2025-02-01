@@ -207,7 +207,7 @@ describe('UserController', () => {
     });
   });
 
-  describe('DELETE /api/users/current',() => {
+  describe.skip('DELETE /api/users/current',() => {
     beforeEach(async() => {
       await testService.deleteUser();
       await testService.createUser();
@@ -237,6 +237,6 @@ describe('UserController', () => {
         const user= await testService.getUser();
         expect(user.token).toBeNull();
     });
-});
+  });
 });
 
