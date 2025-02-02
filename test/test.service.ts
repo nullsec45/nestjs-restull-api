@@ -1,4 +1,4 @@
-import { Prisma, User } from "@prisma/client";
+import { Contact, Prisma, User } from "@prisma/client";
 import { PrismaService } from "../src/common/prisma.service";
 import { Injectable } from "@nestjs/common";
 import * as bcrypt from 'bcrypt';
@@ -40,5 +40,25 @@ export class TestService{
                 username:'test'
             }
         })
+    }
+
+    async getContact():Promise<Contact>{
+        return this.prismaService.contact.findFirst({
+            where:{
+                username:'test'
+            }
+        })
+    }
+
+    async createContact(){
+        await this.prismaService.contact.create({
+            data:{
+                first_name:'test',
+                last_name:'test',
+                email:'test@example.com',
+                phone:'0812345678',
+                username:'test'
+            }
+        });
     }
 }
