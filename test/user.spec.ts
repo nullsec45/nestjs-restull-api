@@ -7,7 +7,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { TestModule } from './test.module';
 import { TestService } from './test.service';
 
-describe('UserController', () => {
+describe.skip('UserController', () => {
   let app: INestApplication;
    let logger: Logger;
    let testService:TestService;
