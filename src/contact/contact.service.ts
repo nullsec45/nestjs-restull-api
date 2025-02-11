@@ -3,10 +3,9 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Logger } from "@nestjs/common";
 import { PrismaService } from "../common/prisma.service";
 import { ValidationService } from "../common/validation.service";
-import { ContactResponse, CreateContactRequest } from "../model/contact.model";
-import { User } from "@prisma/client";
+import { ContactResponse, CreateContactRequest, UpdateContactRequest } from "../model/contact.model";
+import { User,Contact } from "@prisma/client";
 import { ContactValidation } from "./contact.validation";
-import { Contact } from "@prisma/client";
 
 @Injectable()
 export class ContactService{
@@ -45,10 +44,10 @@ export class ContactService{
         return this.contactResponse(contact);
     }
 
-    async get(user:User,contactId:number):Promise<ContactResponse>{
+    async checkContactMustExists(username:string,contactId:number):Promise<Contact>{
         const contact=await this.prismaService.contact.findFirst({
             where:{
-                username:user.username,
+                username:username,
                 id:contactId
             }
         });
@@ -56,6 +55,44 @@ export class ContactService{
         if(!contact){
             throw new HttpException('Contact is not found',404);
         }
+
+        return contact;
+    }
+
+    async get(user:User,contactId:number):Promise<ContactResponse>{
+        const contact=await this.checkContactMustExists(user.username,contactId);
+
+        return this.contactResponse(contact);
+    }
+
+    async update(
+        user:User,
+        request:UpdateContactRequest
+    ):Promise<ContactResponse>{
+        const updateRequest=this.validationService.validate(ContactValidation.UPDATE,request);
+
+        let contact=await this.checkContactMustExists(user.username,updateRequest.id);
+
+        contact=await this.prismaService.contact.update({
+            where:{
+                id:contact.id,
+                username:contact.username
+            },
+            data:updateRequest
+        })
+
+        return this.contactResponse(contact);
+    }
+
+    async remove(user:User,contactId:number):Promise<ContactResponse>{
+        await this.checkContactMustExists(user.username,contactId);
+
+        const contact=await this.prismaService.contact.delete({
+            where:{
+                id:contactId,
+                username:user.username
+            }
+        });
 
         return this.contactResponse(contact);
     }
