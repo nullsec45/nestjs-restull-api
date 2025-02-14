@@ -3,9 +3,11 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Logger } from "@nestjs/common";
 import { PrismaService } from "../common/prisma.service";
 import { ValidationService } from "../common/validation.service";
-import { ContactResponse, CreateContactRequest, UpdateContactRequest } from "../model/contact.model";
+import { ContactResponse, CreateContactRequest, SearchContactRequest, UpdateContactRequest } from "../model/contact.model";
 import { User,Contact } from "@prisma/client";
 import { ContactValidation } from "./contact.validation";
+import { WebResponse } from "src/model/web.model";
+import { filter } from "rxjs";
 
 @Injectable()
 export class ContactService{
@@ -95,6 +97,76 @@ export class ContactService{
         });
 
         return this.contactResponse(contact);
+    }
+
+    async search(
+        user:User,
+        request:SearchContactRequest
+    ):Promise<WebResponse<ContactResponse[]>>{
+        const searchRequest:SearchContactRequest=this.validationService.validate(ContactValidation.SEARCH,request);
+
+        const filters=[];
+
+        if(searchRequest.name){
+            filters.push({
+                OR:[
+                    {
+                        first_name:{
+                            contains:searchRequest.name
+                        },
+                    },
+                    {
+                        last_name:{
+                            contains:searchRequest.name
+                        }
+                    }
+                ]
+            })
+        }
+
+        if(searchRequest.email){
+            filters.push({
+                email:{
+                    contains:searchRequest.email
+                }
+            })
+        }
+
+        if(searchRequest.phone){
+            filters.push({
+                phone:{
+                    contains:searchRequest.phone
+                }
+            })
+        }
+
+        const skip=(searchRequest.page - 1) * searchRequest.size;
+        
+        const contacts=await this.prismaService.contact.findMany({
+            where:{
+                username:user.username,
+                AND:filters
+            },
+            take:searchRequest.size,
+            skip:skip
+        })
+
+        const total=await this.prismaService.contact.count({
+            where:{
+                username:user.username,
+                AND:filters
+            }
+        })
+
+        return {
+            data:contacts.map((contact) => this.contactResponse(contact)),
+            paging:{
+                current_page: searchRequest.page,
+                size: searchRequest.size,
+                total_page: Math.ceil(total / searchRequest.size),
+            }
+
+        }
     }
 }
 
